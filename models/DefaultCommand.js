@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
             command: {
                 type: DataTypes.STRING,
                 allowNull: false,
-                unique: true,
             },
             response: {
                 type: DataTypes.STRING,
@@ -39,17 +38,6 @@ module.exports = (sequelize, DataTypes) => {
             underscored: true,
         }
     );
-
-    DefaultCommand.associate = (models) => {
-        DefaultCommand.belongsTo(models.User, {
-            foreignKey: {
-                name: "userId",
-                allowNull: false,
-            },
-            onUpdate: "RESTRICT",
-            onDelete: "RESTRICT",
-        });
-    };
 
     return DefaultCommand;
 };

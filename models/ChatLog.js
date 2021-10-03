@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING, 
                 allowNull: false 
             },
+            date: {
+                type: DataTypes.DATE,
+                allowNull: false
+            }
         },
         { tableName: "chat_logs", underscored: true }
     );

@@ -1,35 +1,12 @@
-const { ChatLog } = require("../models")
+const { ChatLog } = require("../models");
 
-function getAllChatLog(req, res, next) {
+async function getAllChatLogByUserId(req, res, next) {
     try {
-        
+        const chatLogs = await ChatLog.findAll({ where: { userId: req.user.id } });
+        res.status(200).send(chatLogs);
     } catch (err) {
         next(err);
     }
 }
 
-function createChatLog(req, res, next) {
-    try {
-        
-    } catch (err) {
-        next(err);
-    }
-}
-
-function updateChatLog(req, res, next) {
-    try {
-        
-    } catch (err) {
-        next(err);
-    }
-}
-
-function deleteChatLog(req, res, next) {
-    try {
-        
-    } catch (err) {
-        next(err);
-    }
-}
-
-module.exports = { getAllChatLog, createChatLog, updateChatLog, deleteChatLog };
+module.exports = { getAllChatLogByUserId };

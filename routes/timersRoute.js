@@ -1,8 +1,8 @@
 const express = require("express");
-const { getAllTimer, createTimer, updateTimer, deleteTimer } = require("../controllers/timersController");
+const { getAllTimerByUserId, createTimer, updateTimer, deleteTimer } = require("../controllers/timersController");
 const router = express.Router();
 
-router.get("/", getAllTimer);
+router.get("/", getAllTimerByUserId);
 router.post("/", createTimer);
 router.put("/:id", updateTimer);
 router.delete("/:id", deleteTimer);

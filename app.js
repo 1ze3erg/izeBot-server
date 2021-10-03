@@ -22,15 +22,16 @@ app.use(cors());
 app.use(express.json());
 app.use("/public", express.static("public"));
 
-//path
+// path admin
 app.use("/admin", adminRoute);
-app.use("/users", usersRoute);
-app.use("/custom-commands", customCommandsRoute);
-app.use("/default-commands", defaultCommandsRoute);
-app.use("/timers", timersRoute);
-app.use("/chat-logs", chatLogsRoute);
 app.use("/roles", rolesRoute);
-app.use("/izeBot", izeBotRoute);
+// path user
+app.use("/users", usersRoute);
+app.use("/default-commands", passport.authenticate("jwt-user", { session: false }), defaultCommandsRoute);
+app.use("/custom-commands", passport.authenticate("jwt-user", { session: false }), customCommandsRoute);
+app.use("/timers", passport.authenticate("jwt-user", { session: false }), timersRoute);
+app.use("/chat-logs", passport.authenticate("jwt-user", { session: false }), chatLogsRoute);
+app.use("/izeBot", passport.authenticate("jwt-user", { session: false }), izeBotRoute);
 
 // err handling
 app.use(errController);

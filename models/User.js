@@ -33,15 +33,6 @@ module.exports = (sequelize, DataTypes) => {
     );
 
     User.associate = (models) => {
-        User.hasMany(models.DefaultCommand, {
-            foreignKey: {
-                name: "userId",
-                allowNull: false,
-            },
-            onUpdate: "RESTRICT",
-            onDelete: "RESTRICT",
-        });
-
         User.hasMany(models.CustomCommand, {
             foreignKey: {
                 name: "userId",

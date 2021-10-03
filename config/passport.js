@@ -16,4 +16,4 @@ const jwtStrategy = new JwtStrategy(
     }
 );
 
-passport.use("jwt", jwtStrategy);
+passport.use("jwt-user", jwtStrategy);
