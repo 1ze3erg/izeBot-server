@@ -12,6 +12,7 @@ const usersRoute = require("./routes/usersRoute");
 const izeBotRoute = require("./routes/izeBotRoute");
 const chatLogsRoute = require("./routes/chatLogsRoute");
 const { errController } = require("./controllers/errController");
+const CustomErr = require("./helpers/err");
 const port = process.env.PORT || 8888;
 
 const app = express();
@@ -32,6 +33,11 @@ app.use("/custom-commands", passport.authenticate("jwt-user", { session: false }
 app.use("/timers", passport.authenticate("jwt-user", { session: false }), timersRoute);
 app.use("/chat-logs", passport.authenticate("jwt-user", { session: false }), chatLogsRoute);
 app.use("/izeBot", passport.authenticate("jwt-user", { session: false }), izeBotRoute);
+
+// 404
+app.use((req, res, next)=>{
+    throw new CustomErr("resource not found on this server", 404);
+})
 
 // err handling
 app.use(errController);

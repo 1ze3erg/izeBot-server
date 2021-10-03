@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.put("/:id", passport.authenticate("jwt", { session: false }), updateUser);
+router.put("/update", passport.authenticate("jwt-user", { session: false }), updateUser);
 
 module.exports = router;

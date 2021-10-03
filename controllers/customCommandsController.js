@@ -1,5 +1,6 @@
 const CustomErr = require("../helpers/err");
 const { CustomCommand } = require("../models");
+const { isNumeric, isInt } = require("validator");
 
 async function getAllCustomCommandByUserId(req, res, next) {
     try {
@@ -45,8 +46,10 @@ async function updateCustomCommand(req, res, next) {
             throw new CustomErr("can't update at this customCommand id", 400);
         }
 
-        if (!isNumeric(cooldown, { no_symbols: true }) || isInt(cooldown, { min: 0 })) {
-            throw new CustomErr("interval is not numeric or integer or less than than zero", 400);
+        if (cooldown) {
+            if (!isNumeric(cooldown, { no_symbols: true }) || isInt(cooldown, { min: 0 })) {
+                throw new CustomErr("interval is not numeric or integer or less than than zero", 400);
+            }
         }
 
         await CustomCommand.update(

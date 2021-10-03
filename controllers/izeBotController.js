@@ -2,7 +2,7 @@ const { DefaultCommand, CustomCommand, Timer } = require("../models");
 
 async function getDefaultCommandObj(req, res, next) {
     try {
-        const defaultCommands = await DefaultCommand.findAll({ where: { userId: req.user.id } });
+        const defaultCommands = await DefaultCommand.findAll();
         const defaultCommandObj = defaultCommands.reduce((result, elem) => {
             result[elem.command] = { response: elem.response, cooldown: elem.cooldown };
             return result;

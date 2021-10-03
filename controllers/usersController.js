@@ -59,7 +59,7 @@ async function loginUser(req, res, next) {
         if (findUser && isAuth) {
             const payload = { id: findUser.id, displayName: findUser.displayName };
             const secretKey = process.env.SECRET_KEY;
-            const token = jwt.sign(payload, secretKey);
+            const token = jwt.sign(payload, secretKey, { expiresIn: "10d" });
             return res.status(200).send({ msg: "login success", token });
         } else {
             throw new CustomErr("email or password is incorrect", 400);
@@ -71,18 +71,8 @@ async function loginUser(req, res, next) {
 
 async function updateUser(req, res, next) {
     try {
-        const {
-            avatar,
-            displayName,
-            email,
-            password,
-            firstName,
-            lastName,
-            phoneNumber,
-            address,
-            country,
-            postalCode,
-        } = req.body;
+        const { avatar, displayName, email, password, firstName, lastName, phoneNumber, address, country, postalCode } =
+            req.body;
 
         await User.update(
             {
@@ -100,7 +90,7 @@ async function updateUser(req, res, next) {
             { where: { id: req.user.id } }
         );
 
-        res.status(200).send({ msg: `update user id ${id} success` });
+        res.status(200).send({ msg: `update user ${req.user.displayName} success` });
     } catch (err) {
         next(err);
     }

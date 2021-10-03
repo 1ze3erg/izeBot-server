@@ -27,7 +27,7 @@ async function createTimer(req, res, next) {
             throw new CustomErr("interval is required", 400);
         }
 
-        if (!isNumeric(interval, { no_symbols: true }) || isInt(interval, { min: 300000 })) {
+        if (!isNumeric(interval, { no_symbols: true }) || !isInt(interval, { min: 300000 })) {
             throw new CustomErr("interval is not numeric or integer or greater than or equal 5 min", 400);
         }
 
@@ -55,8 +55,10 @@ async function updateTimer(req, res, next) {
             throw new CustomErr("can't update at this timer id", 400);
         }
 
-        if (!isNumeric(interval, { no_symbols: true }) || isInt(interval, { gt: 300000 })) {
-            throw new CustomErr("interval is not numeric or integer or greater than or equal 5 min", 400);
+        if (interval) {
+            if (!isNumeric(interval, { no_symbols: true }) || !isInt(interval, { min: 300000 })) {
+                throw new CustomErr("interval is not numeric or integer or greater than or equal 5 min", 400);
+            }
         }
 
         await Timer.update(

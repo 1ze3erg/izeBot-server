@@ -44,8 +44,10 @@ async function updateRole(req, res, next) {
             throw new CustomErr("can't update at this role id", 400);
         }
 
-        if (!isNumeric(roleLimit, { no_symbols: true }) || isInt(roleLimit, { gt: 0 })) {
-            throw new CustomErr("interval is not numeric or integer or greater than zero", 400);
+        if (roleLimit) {
+            if (!isNumeric(roleLimit, { no_symbols: true }) || !isInt(roleLimit, { gt: 0 })) {
+                throw new CustomErr("roleLimit is not numeric or integer or greater than zero", 400);
+            }
         }
 
         await Role.update(
