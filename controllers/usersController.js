@@ -2,6 +2,19 @@ const { User } = require("../models");
 const bcrypt = require("bcryptjs");
 const CustomErr = require("../helpers/err");
 const jwt = require("jsonwebtoken");
+const { isEmail } = require("validator");
+
+async function getUserByUserId(req, res, next) {
+    try {
+        const user = await User.findOne({
+            where: { id: req.user.id },
+            attributes: { exclude: ["id", "password", "createdAt", "updatedAt"] },
+        });
+        res.status(200).send(user);
+    } catch (err) {
+        next(err);
+    }
+}
 
 async function registerUser(req, res, next) {
     try {
@@ -13,6 +26,10 @@ async function registerUser(req, res, next) {
 
         if (!email || email.trim() === "") {
             throw new CustomErr("email is required", 400);
+        }
+
+        if (!isEmail(email)) {
+            throw new CustomErr("email is invalid", 400);
         }
 
         if (!password || password.trim() === "") {
@@ -54,13 +71,19 @@ async function loginUser(req, res, next) {
         let isAuth = false;
         if (findUser) {
             isAuth = await bcrypt.compare(password, findUser.password);
-        }
+        } 
 
         if (findUser && isAuth) {
             const payload = { id: findUser.id, displayName: findUser.displayName };
             const secretKey = process.env.SECRET_KEY;
             const token = jwt.sign(payload, secretKey, { expiresIn: "10d" });
-            return res.status(200).send({ msg: "login success", token });
+            return res.status(200).send({
+                msg: "login success",
+                token,
+                userId: findUser.id,
+                displayName: findUser.displayName,
+                avatar: findUser.avatar,
+            });
         } else {
             throw new CustomErr("email or password is incorrect", 400);
         }
@@ -96,4 +119,4 @@ async function updateUser(req, res, next) {
     }
 }
 
-module.exports = { registerUser, loginUser, updateUser };
+module.exports = { getUserByUserId, registerUser, loginUser, updateUser };

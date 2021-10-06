@@ -13,7 +13,7 @@ async function getAllCustomCommandByUserId(req, res, next) {
 
 async function createCustomCommand(req, res, next) {
     try {
-        const { command, response, desciption } = req.body;
+        const { command, response, description } = req.body;
 
         if (!command || command.trim() === "") {
             throw new CustomErr("command is required", 400);
@@ -26,7 +26,7 @@ async function createCustomCommand(req, res, next) {
         const newCustomCommand = await CustomCommand.create({
             command,
             response,
-            desciption,
+            description,
             userId: req.user.id,
         });
 

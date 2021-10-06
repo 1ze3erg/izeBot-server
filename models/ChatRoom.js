@@ -6,6 +6,11 @@ module.exports = (sequelize, DataTypes) => {
                 type: DataTypes.STRING, 
                 allowNull: false 
             },
+            isAvailable: {
+                type: DataTypes.STRING, 
+                allowNull: false,
+                defaultValue: true
+            }
         },
         { 
             tableName: "chat_rooms", 

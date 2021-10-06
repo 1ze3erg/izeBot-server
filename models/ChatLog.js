@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "RESTRICT",
         });
 
-        ChatLog.belongsTo(models.ChatLog, {
+        ChatLog.belongsTo(models.ChatRoom, {
             foreignKey: {
                 name: "chatRoomId",
                 allowNull: false,
