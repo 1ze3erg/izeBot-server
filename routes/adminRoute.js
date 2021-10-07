@@ -13,8 +13,6 @@ const router = express.Router();
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 router.get("/allUser", getAllUser);
-router.get("/allCustom", getAllCustomCommand);
-router.get("/AllTimer", getAllTimer);
 router.get("/getDefault", getAllDefaultCommand);
 router.post("/createDefault", createDefaultCommand);
 router.post("/updateDefault/:id", updateDefaultCommand);
