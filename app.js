@@ -12,6 +12,7 @@ const usersRoute = require("./routes/usersRoute");
 const izeBotRoute = require("./routes/izeBotRoute");
 const chatLogsRoute = require("./routes/chatLogsRoute");
 const chatRoomsRoute = require("./routes/chatRoomsRoute");
+const usersRoomsRoute = require("./routes/usersRoomsRoute");
 const { errController } = require("./controllers/errController");
 const CustomErr = require("./helpers/err");
 const port = process.env.PORT || 8888;
@@ -34,6 +35,7 @@ app.use("/custom-commands", passport.authenticate("jwt-user", { session: false }
 app.use("/timers", passport.authenticate("jwt-user", { session: false }), timersRoute);
 app.use("/chat-logs", passport.authenticate("jwt-user", { session: false }), chatLogsRoute);
 app.use("/chat-rooms", passport.authenticate("jwt-user", { session: false }), chatRoomsRoute);
+app.use("/users-rooms", passport.authenticate("jwt-user", { session: false }), usersRoomsRoute);
 app.use("/izeBot", passport.authenticate("jwt-user", { session: false }), izeBotRoute);
 
 // 404
