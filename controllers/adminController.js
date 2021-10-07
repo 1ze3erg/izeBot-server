@@ -1,7 +1,16 @@
 const CustomErr = require("../helpers/err");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { Admin, User, CustomCommand, Timer, DefaultCommand } = require("../models");
+const { Admin } = require("../models");
+
+async function getAllAdmin(req, res, next) {
+    try {
+        const admins = await Admin.findAll();
+        res.status(200).send(admins);
+    } catch (err) {
+        next(err);
+    }
+}
 
 async function registerAdmin(req, res, next) {
     try {
@@ -26,7 +35,7 @@ async function registerAdmin(req, res, next) {
             password: hashedPassword,
         });
 
-        res.status(201).send({ msg: `user ${newAdmin.username} has been created` });
+        res.status(201).send({ msg: `admin ${newAdmin.username} has been created` });
     } catch (err) {
         next(err);
     }
@@ -67,6 +76,7 @@ async function loginAdmin(req, res, next) {
 }
 
 module.exports = {
+    getAllAdmin,
     registerAdmin,
     loginAdmin,
 };
