@@ -25,8 +25,8 @@ app.use(express.json());
 app.use("/public", express.static("public"));
 
 // path admin
-app.use("/admin", adminRoute);
-app.use("/roles", rolesRoute);
+app.use("/admin", passport.authenticate("jwt-admin", { session: false }), adminRoute);
+app.use("/roles", passport.authenticate("jwt-admin", { session: false }), rolesRoute);
 // path user
 app.use("/users", usersRoute);
 app.use("/default-commands", passport.authenticate("jwt-user", { session: false }), defaultCommandsRoute);

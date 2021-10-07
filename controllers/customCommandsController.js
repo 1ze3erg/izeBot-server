@@ -2,6 +2,15 @@ const CustomErr = require("../helpers/err");
 const { CustomCommand } = require("../models");
 const { isNumeric, isInt } = require("validator");
 
+async function getAllCustomCommand(req, res, next) {
+    try {
+        const customCommands = await CustomCommand.findAll();
+        res.status(200).send(customCommands);
+    } catch (err) {
+        next(err);
+    }
+}
+
 async function getAllCustomCommandByUserId(req, res, next) {
     try {
         const customCommands = await CustomCommand.findAll({ where: { userId: req.user.id } });
@@ -86,4 +95,4 @@ async function deleteCustomCommand(req, res, next) {
     }
 }
 
-module.exports = { getAllCustomCommandByUserId, createCustomCommand, updateCustomCommand, deleteCustomCommand };
+module.exports = { getAllCustomCommand, getAllCustomCommandByUserId, createCustomCommand, updateCustomCommand, deleteCustomCommand };

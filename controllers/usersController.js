@@ -4,6 +4,15 @@ const CustomErr = require("../helpers/err");
 const jwt = require("jsonwebtoken");
 const { isEmail } = require("validator");
 
+async function getAllUser(req, res, next) {
+    try {
+        const users = await User.findAll();
+        res.status(200).send(users);
+    } catch (err) {
+        next(err);
+    }
+}
+
 async function getUserByUserId(req, res, next) {
     try {
         const user = await User.findOne({
@@ -119,4 +128,4 @@ async function updateUser(req, res, next) {
     }
 }
 
-module.exports = { getUserByUserId, registerUser, loginUser, updateUser };
+module.exports = { getAllUser, getUserByUserId, registerUser, loginUser, updateUser };

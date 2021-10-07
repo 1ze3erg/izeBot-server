@@ -2,6 +2,15 @@ const { Timer } = require("../models");
 const { isNumeric, isInt } = require("validator");
 const CustomErr = require("../helpers/err");
 
+async function getAllTimer(req, res, next) {
+    try {
+        const timers = await Timer.findAll();
+        res.status(200).send(timers);
+    } catch (err) {
+        next(err);
+    }
+}
+
 async function getAllTimerByUserId(req, res, next) {
     try {
         const timers = await Timer.findAll({ where: { userId: req.user.id } });
@@ -95,4 +104,4 @@ async function deleteTimer(req, res, next) {
     }
 }
 
-module.exports = { getAllTimerByUserId, createTimer, updateTimer, deleteTimer };
+module.exports = { getAllTimer, getAllTimerByUserId, createTimer, updateTimer, deleteTimer };
