@@ -2,6 +2,7 @@ require("dotenv").config();
 require("./config/passport");
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const socketio = require("socket.io");
 const adminRoute = require("./routes/adminRoute");
@@ -15,10 +16,10 @@ const chatLogsRoute = require("./routes/chatLogsRoute");
 const chatRoomsRoute = require("./routes/chatRoomsRoute");
 const usersRoomsRoute = require("./routes/usersRoomsRoute");
 const { errController } = require("./controllers/errController");
-const { userJoinRoom, getCurrentUser, userLeaveRoom } = require("./helpers/socketRoom");
-const { formatMessage } = require("./helpers/message");
-const { customCommand, defaultCommand, timers } = require("./izeBot/izeBot");
-const { ChatLog } = require("./models");
+const { userJoinRoom, getCurrentUser, userLeaveRoom, users } = require("./socket-server/socketRoom");
+const { formatChatLog, formatChat } = require("./helpers/format");
+const { izeBot, timerJoinRoom, timerInRoom, changeTimerInRoom, timerLeaveRoom } = require("./izeBot/izeBot");
+const { User, ChatLog, ChatRoom, CustomCommand, DefaultCommand, Timer } = require("./models");
 const CustomErr = require("./helpers/err");
 const port = process.env.PORT || 8888;
 
@@ -30,6 +31,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/public", express.static("public"));
 
+// path
 app.use("/admin", adminRoute);
 app.use("/users", usersRoute);
 app.use("/roles", passport.authenticate("jwt-admin", { session: false }), rolesRoute);
@@ -59,27 +61,60 @@ const io = socketio(server, {
     },
 });
 
-io.on("connection", (socket) => {
-    console.log(`socket id = ${socket.id} connected...`);
+const wrap = (middleware) => (socket, next) => middleware(socket.request, {}, next);
 
-    socket.on("join-room", (displayName, userId, chatRoomId) => {
+// io.use(wrap(passport.initialize()));
+// io.use(wrap(passport.authenticate("jwt-user", { session: false })));
+
+io.use(async (socket, next) => {
+    try {
+        const token = socket.handshake.auth.token;
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        const findUser = await User.findOne({ where: { id: decoded.id } });
+        socket.user = findUser;
+        next();
+    } catch (err) {
+        next(err);
+    }
+});
+
+io.on("connection", (socket) => {
+    console.log(`${socket.user.displayName} connected...`);
+
+    socket.on("join-room", async (displayName, userId, chatRoomId) => {
         const user = userJoinRoom(socket.id, displayName, userId, chatRoomId);
+
+        const findChatRoom = await ChatRoom.findOne({ where: { id: chatRoomId } });
+
+        // set command
+        const customCommands = await CustomCommand.findAll({ where: { userId: findChatRoom.hostUserId } });
+        const defaultCommands = await DefaultCommand.findAll();
+        const customCommandObj = customCommands.reduce((result, elem) => {
+            if (elem.status) {
+                result[elem.command] = { response: elem.response, cooldown: elem.cooldown };
+            }
+            return result;
+        }, {});
+        const defaultCommandObj = defaultCommands.reduce((result, elem) => {
+            result[elem.command] = { response: elem.response, cooldown: elem.cooldown };
+            return result;
+        }, {});
+
+        // set timer
+        timerJoinRoom(chatRoomId);
+        const timers = await Timer.findAll({ where: { userId: findChatRoom.hostUserId } });
+        let timerArr = [];
+        timers.forEach((elem) => {
+            const { timerName, response, interval } = elem;
+            if (elem.status) {
+                timerArr.push({ timerName, response, interval });
+            }
+        });
 
         socket.join(user.chatRoomId);
 
         // noti user join room
         socket.to(user.chatRoomId).emit("notification", `${user.displayName} has joined`);
-
-        // timer response interval
-        // timers.forEach((elem) => {
-        //     setInterval(() => {
-        //         io.to(user.chatRoomId).emit("timer", {
-        //             displayName: "izeBot",
-        //             message: elem.response,
-        //             role: "BOT",
-        //         });
-        //     }, 60000);
-        // });
 
         // recieve message from client
         socket.on("input-msg", async (socketId, message) => {
@@ -89,31 +124,41 @@ io.on("connection", (socket) => {
             const [command, ...option] = message ? message.split(" ") : "";
             console.log("command = ", command);
             console.log("option = ", option);
-            let botMessage = defaultCommand[command] || customCommand[command];
 
-            if (typeof botMessage === "function") {
-                if (command === "Hi") {
-                    botMessage = botMessage(currentUser.displayName);
-                }
-                if (command === "random") {
-                    botMessage = botMessage(+option[0], +option[1]);
-                }
+            let botMessage = defaultCommandObj[command]?.response || customCommandObj[command]?.response;
+
+            if (izeBot[botMessage]) {
+                botMessage = izeBot[botMessage];
             }
 
-            const chats = botMessage
-                ? [
-                      { displayName: currentUser.displayName, message: message, role: "MEMBER" },
-                      { displayName: "izeBot", message: `${botMessage}`, role: "BOT" },
-                  ]
-                : [{ displayName: currentUser.displayName, message: message, role: "MEMBER" }];
+            const userChat = formatChat(currentUser.displayName, message, "MEMBER");
+            const botChat = botMessage ? formatChat("izeBot", `${botMessage}`, "BOT") : null;
 
             const now = new Date();
             await ChatLog.create(
-                formatMessage(currentUser.displayName, message, now, currentUser.userId, currentUser.chatRoomId)
+                formatChatLog(currentUser.displayName, message, now, currentUser.userId, currentUser.chatRoomId)
             );
 
             // send message back to client
-            io.to(currentUser.chatRoomId).emit("chat-msg", chats);
+            io.to(currentUser.chatRoomId).emit("chat-msg", userChat);
+            if (botChat) {
+                setTimeout(() => {
+                    io.to(currentUser.chatRoomId).emit("chat-msg", botChat);
+                }, 300);
+            }
+
+            if (!timerInRoom[chatRoomId]) {
+                changeTimerInRoom(chatRoomId);
+                timerArr.forEach((elem) => {
+                    setInterval(() => {
+                        io.to(currentUser.chatRoomId).emit("chat-msg", {
+                            displayName: "izeBot",
+                            message: `${elem.response}`,
+                            role: "BOT",
+                        });
+                    }, elem.interval);
+                });
+            }
         });
 
         // disconnect socket when user leave room
@@ -123,7 +168,9 @@ io.on("connection", (socket) => {
 
         // noti user left room
         socket.on("disconnect", () => {
+            console.log(`${socket.user.displayName} disconnected...`);
             const user = userLeaveRoom(socket.id);
+            timerLeaveRoom(chatRoomId);
             if (user) {
                 socket.to(user.chatRoomId).emit("notification", `${user.displayName} has left`);
             }
