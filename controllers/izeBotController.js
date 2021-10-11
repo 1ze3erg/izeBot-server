@@ -18,7 +18,7 @@ async function getCustomCommandObj(req, res, next) {
         const customCommands = await CustomCommand.findAll({ where: { userId: req.user.id } });
         const customCommandObj = customCommands.reduce((result, elem) => {
             if (elem.status) {
-                result[elem.command] = { response: elem.response, cooldown: elem.cooldown };
+                result[elem.command.toLowerCase()] = { response: elem.response, cooldown: elem.cooldown };
             }
             return result;
         }, {});

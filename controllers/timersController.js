@@ -14,7 +14,7 @@ async function getAllTimer(req, res, next) {
 async function getAllTimerByUserId(req, res, next) {
     try {
         const timers = await Timer.findAll({ where: { userId: req.user.id } });
-        res.status(200).send(timers);
+        res.status(200).send(timers.reverse());
     } catch (err) {
         next(err);
     }
@@ -36,8 +36,8 @@ async function createTimer(req, res, next) {
             throw new CustomErr("interval is required", 400);
         }
 
-        if (!isNumeric(interval, { no_symbols: true }) || !isInt(interval, { min: 60000 })) {
-            throw new CustomErr("interval is not numeric or integer or greater than or equal 1 min", 400);
+        if (!isNumeric(interval) || !isInt(interval) || +interval <= 60000) {
+            throw new CustomErr("interval is not numeric or integer or less than 1 min", 400);
         }
 
         const newTimer = await Timer.create({

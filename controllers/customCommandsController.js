@@ -14,7 +14,7 @@ async function getAllCustomCommand(req, res, next) {
 async function getAllCustomCommandByUserId(req, res, next) {
     try {
         const customCommands = await CustomCommand.findAll({ where: { userId: req.user.id } });
-        res.status(200).send(customCommands);
+        res.status(200).send(customCommands.reverse());
     } catch (err) {
         next(err);
     }
