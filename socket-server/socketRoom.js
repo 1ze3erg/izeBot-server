@@ -18,4 +18,12 @@ function userLeaveRoom(socketId) {
     }
 }
 
-module.exports = { usersInRooms, userJoinRoom, getCurrentUser, userLeaveRoom };
+function haveUserInRoom(chatRoomId) {
+    const index = usersInRooms.findIndex(elem => elem.chatRoomId === chatRoomId);
+    if (index === -1) {
+        return false;
+    }
+    return true;
+}
+
+module.exports = { usersInRooms, userJoinRoom, getCurrentUser, userLeaveRoom, haveUserInRoom };

@@ -7,16 +7,23 @@ const timerInRoom = {};
 
 function timerJoinRoom(chatRoomId) {
     if (!(chatRoomId in timerInRoom)) {
-        timerInRoom[chatRoomId] = false;
+        timerInRoom[chatRoomId] = { status: false, intervalId: [] };
     }
 }
 
-function changeTimerInRoom(chatRoomId, ) {
-    timerInRoom[chatRoomId] = true;
+function timerSetId(chatRoomId, id) {
+    timerInRoom[chatRoomId].intervalId.push(id);
+}
+
+function changeTimerInRoom(chatRoomId) {
+    timerInRoom[chatRoomId].status = true;
 }
 
 function timerLeaveRoom(chatRoomId) {
+    timerInRoom[chatRoomId].intervalId.forEach((elem) => {
+        clearInterval(elem);
+    });
     delete timerInRoom[chatRoomId];
 }
 
-module.exports = { izeBot, timerInRoom, timerJoinRoom, changeTimerInRoom, timerLeaveRoom };
+module.exports = { izeBot, timerInRoom, timerJoinRoom, timerSetId, changeTimerInRoom, timerLeaveRoom };

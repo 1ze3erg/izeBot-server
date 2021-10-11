@@ -16,9 +16,9 @@ const chatLogsRoute = require("./routes/chatLogsRoute");
 const chatRoomsRoute = require("./routes/chatRoomsRoute");
 const usersRoomsRoute = require("./routes/usersRoomsRoute");
 const { errController } = require("./controllers/errController");
-const { userJoinRoom, getCurrentUser, userLeaveRoom, users } = require("./socket-server/socketRoom");
+const { userJoinRoom, getCurrentUser, userLeaveRoom, users, haveUserInRoom } = require("./socket-server/socketRoom");
 const { formatChatLog, formatChat } = require("./helpers/format");
-const { izeBot, timerJoinRoom, timerInRoom, changeTimerInRoom, timerLeaveRoom } = require("./izeBot/izeBot");
+const { izeBot, timerJoinRoom, timerInRoom, changeTimerInRoom, timerLeaveRoom, timerSetId } = require("./izeBot/izeBot");
 const { User, ChatLog, ChatRoom, CustomCommand, DefaultCommand, Timer } = require("./models");
 const CustomErr = require("./helpers/err");
 const port = process.env.PORT || 8888;
@@ -60,11 +60,6 @@ const io = socketio(server, {
         origin: "*",
     },
 });
-
-const wrap = (middleware) => (socket, next) => middleware(socket.request, {}, next);
-
-// io.use(wrap(passport.initialize()));
-// io.use(wrap(passport.authenticate("jwt-user", { session: false })));
 
 io.use(async (socket, next) => {
     try {
@@ -147,16 +142,18 @@ io.on("connection", (socket) => {
                 }, 300);
             }
 
-            if (!timerInRoom[chatRoomId]) {
+            if (!timerInRoom[chatRoomId].status) {
                 changeTimerInRoom(chatRoomId);
                 timerArr.forEach((elem) => {
-                    setInterval(() => {
+                    const id = setInterval(() => {
+                        console.log("socket timer");
                         io.to(currentUser.chatRoomId).emit("chat-msg", {
                             displayName: "izeBot",
                             message: `${elem.response}`,
                             role: "BOT",
                         });
                     }, elem.interval);
+                    timerSetId(chatRoomId, id);
                 });
             }
         });
@@ -170,7 +167,9 @@ io.on("connection", (socket) => {
         socket.on("disconnect", () => {
             console.log(`${socket.user.displayName} disconnected...`);
             const user = userLeaveRoom(socket.id);
-            timerLeaveRoom(chatRoomId);
+            if (!haveUserInRoom(chatRoomId)) {
+                timerLeaveRoom(chatRoomId);
+            }
             if (user) {
                 socket.to(user.chatRoomId).emit("notification", `${user.displayName} has left`);
             }
