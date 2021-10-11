@@ -1,8 +1,12 @@
 const { User } = require("../models");
-const bcrypt = require("bcryptjs");
-const CustomErr = require("../helpers/err");
-const jwt = require("jsonwebtoken");
 const { isEmail } = require("validator");
+const CustomErr = require("../helpers/err");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const util = require("util");
+const cloudinary = require("cloudinary").v2;
+const uploadPromise = util.promisify(cloudinary.uploader.upload);
 
 async function getAllUser(req, res, next) {
     try {
@@ -80,7 +84,7 @@ async function loginUser(req, res, next) {
         let isAuth = false;
         if (findUser) {
             isAuth = await bcrypt.compare(password, findUser.password);
-        } 
+        }
 
         if (findUser && isAuth) {
             const payload = { id: findUser.id, displayName: findUser.displayName };
@@ -103,12 +107,11 @@ async function loginUser(req, res, next) {
 
 async function updateUser(req, res, next) {
     try {
-        const { avatar, displayName, email, password, firstName, lastName, phoneNumber, address, country, postalCode } =
+        const { displayName, email, password, firstName, lastName, phoneNumber, address, country, postalCode } =
             req.body;
 
         await User.update(
             {
-                avatar,
                 displayName,
                 email,
                 password,
@@ -128,4 +131,24 @@ async function updateUser(req, res, next) {
     }
 }
 
-module.exports = { getAllUser, getUserByUserId, registerUser, loginUser, updateUser };
+async function updateAvatar(req, res, next) {
+    try {
+        console.log(req.file);
+        let result;
+        if (req.file?.size <= 5 * 1e6) {
+            result = await uploadPromise(req.file.path);
+            fs.unlinkSync(req.file.path);
+        } else {
+            fs.unlinkSync(req.file.path);
+            throw new CustomErr("Your image file is greater than 5 MB", 400);
+        }
+
+        await User.update({ avatar: result.secure_url }, { where: { id: req.user.id } });
+
+        res.status(200).send({ msg: `upload avatar success` });
+    } catch (err) {
+        next(err);
+    }
+}
+
+module.exports = { getAllUser, getUserByUserId, registerUser, loginUser, updateUser, updateAvatar };
