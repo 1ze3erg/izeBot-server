@@ -10,7 +10,6 @@ module.exports = (sequelize, DataTypes) => {
             command: { 
                 type: DataTypes.STRING, 
                 allowNull: false, 
-                unique: true 
             },
             response: { 
                 type: DataTypes.STRING, 

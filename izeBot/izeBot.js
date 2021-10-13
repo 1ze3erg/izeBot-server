@@ -1,6 +1,15 @@
-const izeBot = {
-    "new Date()": new Date(),
-    "Math.random()": Math.random(),
+const defaultCommand = {
+    hello: { response: "Hello User", type: "string" },
+    bye: { response: "Goodbye User", type: "string" },
+    "!random": {
+        response: function (min = 0, max = 10) {
+            return Math.floor(Math.random() * (max - min)) + min;
+        },
+        type: "function",
+    },
+    "!pi": { response: Math.PI, type: "javascript" },
+    "!now": { response: new Date().toLocaleString(), type: "javascript" },
+    "!covid": { response: "https://covid19.ddc.moph.go.th/api/Cases/today-cases-all", type: "api" },
 };
 
 const timerInRoom = {};
@@ -26,4 +35,4 @@ function timerLeaveRoom(chatRoomId) {
     delete timerInRoom[chatRoomId];
 }
 
-module.exports = { izeBot, timerInRoom, timerJoinRoom, timerSetId, changeTimerInRoom, timerLeaveRoom };
+module.exports = { defaultCommand, timerInRoom, timerJoinRoom, timerSetId, changeTimerInRoom, timerLeaveRoom };

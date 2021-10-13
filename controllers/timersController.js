@@ -36,7 +36,7 @@ async function createTimer(req, res, next) {
             throw new CustomErr("interval is required", 400);
         }
 
-        if (!isNumeric(interval) || !isInt(interval) || +interval <= 60000) {
+        if (!isNumeric(interval) || !isInt(interval) || +interval < 60000) {
             throw new CustomErr("interval is not numeric or integer or less than 1 min", 400);
         }
 

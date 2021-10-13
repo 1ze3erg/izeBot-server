@@ -1,5 +1,6 @@
 require("dotenv").config();
 require("./config/passport");
+const axios = require("axios");
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -18,7 +19,14 @@ const usersRoomsRoute = require("./routes/usersRoomsRoute");
 const { errController } = require("./controllers/errController");
 const { userJoinRoom, getCurrentUser, userLeaveRoom, users, haveUserInRoom } = require("./socket-server/socketRoom");
 const { formatChatLog, formatChat } = require("./helpers/format");
-const { izeBot, timerJoinRoom, timerInRoom, changeTimerInRoom, timerLeaveRoom, timerSetId } = require("./izeBot/izeBot");
+const {
+    defaultCommand,
+    timerJoinRoom,
+    timerInRoom,
+    changeTimerInRoom,
+    timerLeaveRoom,
+    timerSetId,
+} = require("./izeBot/izeBot");
 const { User, ChatLog, ChatRoom, CustomCommand, DefaultCommand, Timer } = require("./models");
 const CustomErr = require("./helpers/err");
 const port = process.env.PORT || 8888;
@@ -83,15 +91,10 @@ io.on("connection", (socket) => {
 
         // set command
         const customCommands = await CustomCommand.findAll({ where: { userId: findChatRoom.hostUserId } });
-        const defaultCommands = await DefaultCommand.findAll();
         const customCommandObj = customCommands.reduce((result, elem) => {
             if (elem.status) {
                 result[elem.command] = { response: elem.response, cooldown: elem.cooldown };
             }
-            return result;
-        }, {});
-        const defaultCommandObj = defaultCommands.reduce((result, elem) => {
-            result[elem.command] = { response: elem.response, cooldown: elem.cooldown };
             return result;
         }, {});
 
@@ -116,18 +119,31 @@ io.on("connection", (socket) => {
             const currentUser = getCurrentUser(socketId);
 
             // izeBot command response
-            const [command, ...option] = message ? message.split(" ") : "";
-            console.log("command = ", command);
-            console.log("option = ", option);
+            const [text, option] = message ? message.split(" ") : "";
 
-            let botMessage = defaultCommandObj[command]?.response || customCommandObj[command]?.response;
+            let botMessage = customCommandObj[text.toLowerCase()] || defaultCommand[text.toLowerCase()];
 
-            if (izeBot[botMessage]) {
-                botMessage = izeBot[botMessage];
+            if (botMessage?.type === "api") {
+                const res = await axios.get(botMessage.response);
+                botMessage = `จำนวนคนติดเชื้อวันที่ ${new Date(res.data[0]?.txn_date).toLocaleDateString("th-TH", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                })} จำนวน ${res.data[0]?.new_case} คน`;
+            } else if (botMessage?.type === "function") {
+                if (option) {
+                    botMessage = botMessage.response(+option.split("-")[0], +option.split("-")[1]);
+                } else {
+                    botMessage = botMessage.response();
+                }
+            } else if (botMessage?.type === "javascript" || botMessage) {
+                botMessage = botMessage.response;
             }
 
+            console.log(botMessage);
+
             const userChat = formatChat(currentUser.displayName, message, "MEMBER");
-            const botChat = botMessage ? formatChat("izeBot", `${botMessage}`, "BOT") : null;
+            const botChat = botMessage ? formatChat("izeBot", botMessage, "BOT") : null;
 
             const now = new Date();
             await ChatLog.create(
